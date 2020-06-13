@@ -313,15 +313,15 @@ sum(is.na(drugs.data)) # No NA
 # use of a drug. Instead, we focus on whether it has been taken on not recently.
 
 # Never used or used over a decade ago: never used
-drugs.data[drugs.data == "CL0"] = 0
-drugs.data[drugs.data == "CL1"] = 0
+drugs.data[drugs.data == "CL0"] = FALSE
+drugs.data[drugs.data == "CL1"] = FALSE
 
 # Used in last decade to last day: used
-drugs.data[drugs.data == "CL2"] = 1
-drugs.data[drugs.data == "CL3"] = 1
-drugs.data[drugs.data == "CL4"] = 1
-drugs.data[drugs.data == "CL5"] = 1
-drugs.data[drugs.data == "CL6"] = 1
+drugs.data[drugs.data == "CL2"] = TRUE
+drugs.data[drugs.data == "CL3"] = TRUE
+drugs.data[drugs.data == "CL4"] = TRUE
+drugs.data[drugs.data == "CL5"] = TRUE
+drugs.data[drugs.data == "CL6"] = TRUE
 
 # Creating has_taken_drugs column. It is equal to 0 if a user has never tried any drug, 1 otherwise.
 drugs.data$has_taken_drugs = 0
@@ -331,7 +331,7 @@ for(i in seq(1:dim(drugs.data)[1]))
   row.unique.values = unique(unlist(drugs.row))
   if(1 %in% row.unique.values)
   {
-    drugs.data[i]$has_taken_drugs = 1
+    drugs.data[i]$has_taken_drugs = TRUE
   }
 }
 

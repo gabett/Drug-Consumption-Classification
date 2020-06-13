@@ -1,7 +1,8 @@
-# Dataset available at: https://archive.ics.uci.edu/ml/datasets/adult
 
-# Libraries
-library(tibble)
+  # Dataset available at: https://archive.ics.uci.edu/ml/datasets/adult
+  
+  # Libraries
+  library(tibble)
 library(data.table)
 library(dplyr)
 library(ggplot2)
