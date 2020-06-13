@@ -346,7 +346,7 @@ for(i in seq(1:dim(drugs.data)[1]))
     drugs.data[i]$has_taken_drugs = TRUE
   }
   
-  purely.illegal.drugs.row = drugs.row[, -c("Alcohol", "Caff", "Cannabis", "Choc", "Legalh", "Nicotine")]
+  purely.illegal.drugs.row = drugs.row[, -c("Alcohol", "Caff", "Choc", "Legalh", "Nicotine")]
   row.illegal.unique.values = unique(unlist(purely.illegal.drugs.row))
   if(TRUE %in% row.illegal.unique.values)
   {
