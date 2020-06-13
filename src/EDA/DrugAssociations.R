@@ -14,6 +14,8 @@ library(RColorBrewer)
 library(pals)
 library(ggnetwork)
 library(igraph)
+library(arules)       # Association analysis
+library(arulesViz)    # Visualizing for association analysis
 
 # Global Variables 
 dir = "C:\\Users\\ettag\\Documents\\GitHub\\Stastistical-Learning-Project\\data"
@@ -30,13 +32,10 @@ setwd(dir = images.dir)
 drug.categoricals <- drugs.clean %>%
   select(14:31)
 
-for(col.name in colnames(drug.categoricals))
-{
-  drug.column = drug.categoricals[col.name]
-  drug.column[drug.column == 1] = col.name
-  
-  drug.categoricals[col.name] = drug.column
-}
+drug.categoricals = as.numeric(factor(matrix))
+
+drug.arules <- as(as.matrix(drug.categoricals), "transactions")
+basket_rules <- apriori(drug.arules,parameter = list(sup = 0.3, conf = 0.7,target="rules"))
 
 drug.graph <- graph.data.frame(as.matrix(drug.categoricals), directed = T)
 V(drug.graph)$degree = degree(drug.graph) 
