@@ -191,3 +191,5 @@ ggsave(paste(images.dir, "canada_percentage.pdf", sep = ""), canada.percentage.p
 
 percentage.by.country.compound = grid.arrange(auz.percentage.plot, uk.percentage.plot, usa.percentage.plot, ireland.percentage.plot, canada.percentage.plot, legend, nrow = 3, ncol = 2)
 ggsave(paste(images.dir, "countries_percentage.pdf", sep = ""), percentage.by.country.compound, device = "pdf", width = 20, height = 20)
+
+rm(list = ls())
