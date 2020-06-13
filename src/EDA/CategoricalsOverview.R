@@ -46,6 +46,27 @@ hist.age = ggplot(drugs.clean) +
 hist.age
 ggsave(paste(images.dir, "hist_age.pdf", sep = ""), hist.age, device = "pdf", width= 15, height= 15)
 
+# Users vs Non users Histograms ####
+hist.illegal.usage = ggplot(drugs.clean) + 
+  geom_histogram(aes(x = has_taken_illegal_drugs, fill = has_taken_illegal_drugs), alpha = 1, stat = "count", show.legend = F) + 
+  theme_minimal() +
+  labs(x = "Patients", y = "Count", fill = "Drugs") +
+  scale_fill_manual(values = c("#264653","#e63946"))+
+  scale_x_discrete(values = c("Never tried illegals", "Tried at least once")) +
+  theme(legend.position = "none",
+        aspect.ratio = 1, 
+        title = element_text(size= 15),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(size= 15),
+        axis.text.y = element_text(size= 15),
+        axis.title.y = element_text(size= 15),
+        axis.title.x = element_text(size= 15),
+        legend.key = element_blank(), legend.key.size = unit(1,"line"),
+        legend.title=element_text(size= 15))
+hist.illegal.usage
+ggsave(paste(images.dir, "hist_illegal_usage.pdf", sep = ""), hist.illegal.usage, device = "pdf", width= 15, height= 15)
+
+
 # Gender Histogram ####
 hist.gender = ggplot(drugs.clean) + 
   geom_histogram(aes(x = Gender, fill = Gender), alpha = 1, stat = "count", show.legend = F) + 
@@ -111,7 +132,8 @@ geom_histogram(aes(x = Country, fill = Country), alpha = 1, stat = "count", show
 theme_minimal() +
 labs(y = "Count", fill = "Drugs") + 
 scale_fill_manual(values = c("#264653","#e9c46a","#b97113","#14213d","#e63946", "#606c38", "#F4978E", "#bc3908","#f6aa1c"))+
-theme(legend.position = "left",
+scale_x_discrete(labels = c("USA", "NZ", "Others", "AUS", "Ireland", "Canada", "UK")) +
+theme(legend.position = "none",
         aspect.ratio = 1, 
         title = element_text(size= 15),
         axis.line = element_line(colour = "black"),
@@ -124,7 +146,8 @@ theme(legend.position = "left",
 hist.country
 ggsave(paste(images.dir, "hist_country.pdf", sep = ""), hist.country, device = "pdf", width= 15, height= 15)
 
-# Plot all hisotgrams together ####
+# Plot all histograms together ####
 
-hist.compound = grid.arrange(hist.gender, hist.age, hist.ethnicity, hist.education, hist.country, nrow = 2, ncol = 3)
+hist.compound = grid.arrange(hist.illegal.usage, hist.gender, hist.age, hist.ethnicity, hist.education, hist.country, nrow = 2, ncol = 3)
 ggsave(paste(images.dir, "hist_compound.pdf", sep = ""), hist.compound, device = "pdf", width= 15, height= 15)
+rm(list = ls())

@@ -32,27 +32,55 @@ setwd(dir = images.dir)
 drug.categoricals <- drugs.clean %>%
   select(14:31)
 
-drug.categoricals = as.numeric(factor(matrix))
+# For each patient, we create ad edge for each drug who has been taken (value equal to 1).
+edge.list = tibble()
+for(i in seq(1:nrow(drug.categoricals)))
+{
+  row.tmp = drug.categoricals[i, ] 
+  
+  if(length(colnames(row.tmp)[row.tmp == 1]) > 1)
+  {
+    edges.tmp = t(combn(colnames(row.tmp)[row.tmp == 1], 2))
+    edge.list = rbind(edge.list, edges.tmp)
+  }
+}
 
-drug.arules <- as(as.matrix(drug.categoricals), "transactions")
-basket_rules <- apriori(drug.arules,parameter = list(sup = 0.3, conf = 0.7,target="rules"))
+grouped.edge.list <- edge.list %>% group_by(V1,V2) %>% count() %>% rename(weight=n)
 
-drug.graph <- graph.data.frame(as.matrix(drug.categoricals), directed = T)
-V(drug.graph)$degree = degree(drug.graph) 
+drug.graph <- graph.data.frame(grouped.edge.list, directed = F)
+
+# Edge betweenness clustering
+eb <- cluster_edge_betweenness(drug.graph)
+membership(eb)
+communities(eb)
+
+V(drug.graph)$degree = degree(drug.graph)
+V(drug.graph)$name = names(V(drug.graph))
+E(drug.graph)$weight = grouped.edge.list$weight
+V(drug.graph)$membership = eb$membership
+
+membership.colors = eb$membership
+membership.colors[membership.colors == 1] = "#ffd166"
+membership.colors[membership.colors == 2] = "#02c39a"
+membership.colors[membership.colors == 3] = "#e63946"
+V(drug.graph)$membership.colors =  membership.colors
 
 # Graph Visualization ####
-forgraph <- ggnetwork(drug.graph)
+forgraph <- ggnetwork(drug.graph, layout = layout.davidson.harel(drug.graph))
 
 graph.plot = ggplot(forgraph,aes(x=x,y=y,xend=xend,yend=yend))+
-  geom_edges(color = "gray", show.legend = FALSE) + 
-  geom_nodes(size = 10, color = "#900001", show.legend = FALSE) +
+  geom_edges(size = 1.5, color = "gray", show.legend = FALSE, alpha = 0.3) + 
+  geom_nodes(size = 25, color = membership.colors, show.legend = FALSE) +
   theme_blank()+
+  geom_nodetext_repel(aes(label = name), fontface = "bold", color = "#003049", size = 10) + 
   theme(legend.position = "right",
         aspect.ratio = 1, 
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
         legend.title=element_text(size=18), legend.text=element_text(size=18))
 graph.plot
 
+
 ggsave(paste(images.dir, "drug_association.pdf", sep = ""), graph.plot, width = 15, height = 15, device = "pdf")
 
 rm(list = ls())
+

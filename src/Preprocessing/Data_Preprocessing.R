@@ -324,26 +324,46 @@ drugs.data[drugs.data == "CL5"] = TRUE
 drugs.data[drugs.data == "CL6"] = TRUE
 
 # Creating has_taken_drugs column. It is equal to 0 if a user has never tried any drug, 1 otherwise.
-drugs.data$has_taken_drugs = 0
+drugs.data$has_taken_drugs = FALSE
+
+# We assume that the following drugs are not illegal:
+# Cannabis (USA, Canada, Australia do allow it, NZ is having a referendum about in September)
+# Alcohol
+# Chocolate
+# Caffeine
+# Nicotine
+# Legalh
+
+legal.drugs = c("Alcohol", "Caff", "Cannabis", "Choc", "Legalh", "Nicotine")
+drugs.data$has_taken_illegal_drugs = FALSE
+
 for(i in seq(1:dim(drugs.data)[1]))
 {
   drugs.row = drugs.data[i, 14:32]
   row.unique.values = unique(unlist(drugs.row))
-  if(1 %in% row.unique.values)
+  if(TRUE %in% row.unique.values)
   {
     drugs.data[i]$has_taken_drugs = TRUE
   }
+  
+  purely.illegal.drugs.row = drugs.row[, -c("Alcohol", "Caff", "Cannabis", "Choc", "Legalh", "Nicotine")]
+  row.illegal.unique.values = unique(unlist(purely.illegal.drugs.row))
+  if(TRUE %in% row.illegal.unique.values)
+  {
+    drugs.data[i]$has_taken_illegal_drugs = TRUE
+  }
 }
 
-# Converting categorical labels to a more readible format. 
+# Converting categorical labels to a more readble format. 
 drugs.data$Age = as.factor(drugs.data$Age)
 drugs.clean <- drugs.data %>%
   mutate(Age = factor(Age, labels = c("18-24", "25-34", "35-44", "45-54", "55-64", "65+"))) %>%
   mutate(Gender = factor(Gender, labels = c('Male', 'Female'))) %>%
   mutate(Education = factor(Education, labels = c("< 16", "16", "17", "18", "College/University", "ProfessionalCert/Diploma", "BS", "MS", "PhD"))) %>%
-  mutate(Country = factor(Country, labels = c("USA", "New Zeland", "Other", "Australia", "Ireland","Canada","UK"))) %>%
+  mutate(Country = factor(Country, labels = c("USA", "New Zealand", "Other", "Australia", "Ireland","Canada","UK"))) %>%
   mutate(Ethnicity = factor(Ethnicity, labels = c("Black", "Asian", "White", "White/Black", "Other", "White/Asian", "Black/Asian"))) %>%
   mutate(has_taken_drugs = factor(has_taken_drugs, labels = c("No", "Yes"))) %>%
+  mutate(has_taken_illegal_drugs = factor(has_taken_illegal_drugs, labels = c("No", "Yes"))) %>%
   mutate_at(vars(Alcohol:has_taken_drugs), funs(as.factor)) %>%
   select(-id)
 
