@@ -80,10 +80,10 @@ numeric_real = ifelse(test.ds$has_taken_illegal_drugs == "Yes",1,0)
 
 roc.out <- roc(numeric_predict, numeric_real, levels=c(0, 1))
 plot.roc = plot(roc.out,  
-     print.auc=TRUE, 
-     main = "Illegal Drug Users Classification",
-     legacy.axes=TRUE, 
-     xlab="False positive rate", ylab="True positive rate")
+                print.auc=TRUE, 
+                main = "Illegal Drug Users Classification",
+                legacy.axes=TRUE, 
+                xlab="False positive rate", ylab="True positive rate")
 plot.roc
 
 # Clean ####
