@@ -336,6 +336,7 @@ drugs.data$has_taken_drugs = FALSE
 
 legal.drugs = c("Alcohol", "Caff", "Cannabis", "Choc", "Legalh", "Nicotine")
 drugs.data$has_taken_illegal_drugs = FALSE
+drugs.data$has_taken_synthetic_drugs = FALSE
 
 for(i in seq(1:dim(drugs.data)[1]))
 {
@@ -352,9 +353,16 @@ for(i in seq(1:dim(drugs.data)[1]))
   {
     drugs.data[i]$has_taken_illegal_drugs = TRUE
   }
+  
+  synthetic.drugs.row = drugs.row[, c("Amphet", "Ecstasy", "LSD", "Ketamine")]
+  row.synthetic.unique.values = unique(unlist(synthetic.drugs.row))
+  if(TRUE %in% row.synthetic.unique.values)
+  {
+    drugs.data[i]$has_taken_synthetic_drugs = TRUE
+  }
 }
 
-# Converting categorical labels to a more readble format. 
+# Converting categorical labels to a more readable format. 
 drugs.data$Age = as.factor(drugs.data$Age)
 drugs.clean <- drugs.data %>%
   mutate(Age = factor(Age, labels = c("18-24", "25-34", "35-44", "45-54", "55-64", "65+"))) %>%
@@ -364,6 +372,7 @@ drugs.clean <- drugs.data %>%
   mutate(Ethnicity = factor(Ethnicity, labels = c("Black", "Asian", "White", "White/Black", "Other", "White/Asian", "Black/Asian"))) %>%
   mutate(has_taken_drugs = factor(has_taken_drugs, labels = c("No", "Yes"))) %>%
   mutate(has_taken_illegal_drugs = factor(has_taken_illegal_drugs, labels = c("No", "Yes"))) %>%
+  mutate(has_taken_synthetic_drugs = factor(has_taken_synthetic_drugs, labels = c("No", "Yes"))) %>%
   mutate_at(vars(Alcohol:has_taken_drugs), funs(as.factor)) %>%
   select(-id)
 

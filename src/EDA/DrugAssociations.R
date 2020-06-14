@@ -38,9 +38,9 @@ for(i in seq(1:nrow(drug.categoricals)))
 {
   row.tmp = drug.categoricals[i, ] 
   
-  if(length(colnames(row.tmp)[row.tmp == 1]) > 1)
+  if(length(colnames(row.tmp)[row.tmp == TRUE]) > 1)
   {
-    edges.tmp = t(combn(colnames(row.tmp)[row.tmp == 1], 2))
+    edges.tmp = t(combn(colnames(row.tmp)[row.tmp == TRUE], 2))
     edge.list = rbind(edge.list, edges.tmp)
   }
 }

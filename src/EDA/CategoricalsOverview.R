@@ -12,6 +12,7 @@ library(maps)
 library(tidyr)
 library(RColorBrewer)
 library(pals)
+
 # Global Variables 
 dir = "C:\\Users\\ettag\\Documents\\GitHub\\Stastistical-Learning-Project\\data"
 setwd(dir = dir)
@@ -52,7 +53,6 @@ hist.illegal.usage = ggplot(drugs.clean) +
   theme_minimal() +
   labs(x = "Patients", y = "Count", fill = "Drugs") +
   scale_fill_manual(values = c("#264653","#e63946"))+
-  scale_x_discrete(values = c("Never tried illegals", "Tried at least once")) +
   theme(legend.position = "none",
         aspect.ratio = 1, 
         title = element_text(size= 15),

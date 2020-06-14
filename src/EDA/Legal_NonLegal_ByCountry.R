@@ -14,7 +14,6 @@ library(tidyr)
 library(RColorBrewer)
 library(pals)
 library(rw)
-library(rworldmap)
 
 # Global Variables 
 dir = "C:\\Users\\ettag\\Documents\\GitHub\\Stastistical-Learning-Project\\data"
@@ -103,7 +102,7 @@ ggsave(paste(images.dir, "auz_percentage.pdf", sep = ""), auz.percentage.plot, d
 
 
 # UK Map ####
-uk.map <- map_data("UK")
+uk.map <- map_data("world", region = "UK")
 uk.region = as.data.table(region.lab.data)[region.lab.data$region == "UK"]
 uk.percentage.plot = ggplot(uk.map, aes(x = long, y = lat)) +
   geom_polygon(aes(group = group), fill = "#5D394A", show.legend = F) +
