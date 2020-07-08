@@ -1,4 +1,4 @@
-# Dataset available at: https://archive.ics.uci.edu/ml/datasets/adult
+# Dataset available at: https://archive.ics.uci.edu/ml/datasets/Drug+consumption+%28quantified%29
 rm(list = ls())
 
 # Libraries
@@ -46,16 +46,15 @@ deaths.by.country = ggplot(data.by.country.year, aes(x=Year, y=deaths)) +
   scale_fill_npg() +
   scale_color_npg() + 
   theme(legend.position = "bottom",
-        aspect.ratio = 1,
         title = element_text(size= 20),
         axis.line = element_line(colour = "black"),
         axis.text.x = element_text(size= 20, hjust = 1, angle = 90),
-        axis.text.y = element_text(size = 10),
+        axis.text.y = element_text(size = 20),
         axis.title.y = element_text(size= 20),
         axis.title.x = element_text(size= 20),
-        legend.key = element_blank(10), legend.key.size = unit(1,"line"),
+        legend.key.size = unit(1,"line"),
         legend.title=element_text(size = 20),
-        legend.text = element_text(size = 15),
+        legend.text = element_text(size = 20),
         strip.text = element_text(size=20)) +
   labs(fill = "Countries", x = "Year", y = "Number of deaths")
 deaths.by.country
