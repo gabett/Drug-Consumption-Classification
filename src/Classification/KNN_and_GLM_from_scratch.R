@@ -114,7 +114,7 @@ control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryF
 legal_glm_model <- train(x=legal_train_data, y=train_target, method = "glm", trControl = control)
 
 legal_glm_prediction = predict(legal_glm_model, newdata=legal_test_data)
-legal_glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
+legal_glm_matrix = confusionMatrix(legal_glm_prediction, test_target, positive="Yes" )
 
 glm_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_glm_model, newdata=legal_test_data, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
@@ -143,7 +143,7 @@ control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryF
 legal_knn_model <- train(x=legal_train_data, y=train_target, method = "knn", trControl = control,  tuneLength = 40)
 
 
-plot(legal_knn_model)
+plot(legal_knn_model, xlab = "Number of Neighbors", ylab = "AUC")
 legal_knn_prediction = predict(legal_knn_model, newdata=legal_test_data)
 legal_knn_matrix = confusionMatrix(legal_knn_prediction, test_target, positive="Yes" )
 
