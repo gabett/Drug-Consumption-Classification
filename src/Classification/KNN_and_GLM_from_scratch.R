@@ -1,4 +1,4 @@
-# Dataset available at: https://archive.ics.uci.edu/ml/datasets/adult
+# Dataset available at: https://archive.ics.uci.edu/ml/datasets/Drug+consumption+%28quantified%29
 
 # Libraries
 library(tibble)
@@ -62,9 +62,31 @@ prop.table(table(test_target))
 
 control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryFunction=twoClassSummary, returnResamp ="all")
 knn_model <- train(x=train_data, y=train_target, method = "knn", trControl = control,  tuneLength = 40)
-plot(knn_model)
+plot(knn_model, xlab = "Number of Neighbors", ylab = "AUC")
 knn_prediction = predict(knn_model, newdata=test_data)
 knn_matrix = confusionMatrix(knn_prediction, test_target, positive="Yes" )
+
+knn_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(knn_model, newdata=test_data, type="prob")[,"Yes"],
+                 plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
+knn_basic_pROC
+
+knn_basic_roc = pROC::ggroc(knn_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+  geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
+  annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8421", parse = TRUE) +   
+  theme_minimal() +
+  theme(legend.position = "left",
+        aspect.ratio = 1, 
+        title = element_text(size = 20),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        legend.key = element_blank(), legend.key.size = unit(1,"line"),
+        legend.title=element_text(size=20)) 
+knn_basic_roc
+ggsave(paste(images.dir, "knn_basic_roc.pdf", sep = ""), knn_basic_roc, device = "pdf", width = 15, height = 15)
+
 
 #glm comparison
 control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryFunction=twoClassSummary, returnResamp ="all")
@@ -115,7 +137,7 @@ legal_glm_model <- train(x=legal_train_data, y=train_target, method = "glm", trC
 
 legal_glm_prediction = predict(legal_glm_model, newdata=legal_test_data)
 legal_glm_matrix = confusionMatrix(legal_glm_prediction, test_target, positive="Yes" )
-
+legal_glm_matrix
 glm_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_glm_model, newdata=legal_test_data, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 
@@ -148,11 +170,11 @@ legal_knn_prediction = predict(legal_knn_model, newdata=legal_test_data)
 legal_knn_matrix = confusionMatrix(legal_knn_prediction, test_target, positive="Yes" )
 
 
-knn = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_knn_model, newdata=legal_test_data, type="prob")[,"Yes"],
+knn_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_knn_model, newdata=legal_test_data, type="prob")[,"Yes"],
     plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
-knn
+knn_legal_pROC
 
-knn_roc = pROC::ggroc(knn) +xlab("Specificity") + ylab("Sensitivity") + 
+knn_legal_roc = pROC::ggroc(knn_legal_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
   annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8953", parse = TRUE) +   
   theme_minimal() +
@@ -166,6 +188,6 @@ knn_roc = pROC::ggroc(knn) +xlab("Specificity") + ylab("Sensitivity") +
         axis.title.x = element_text(size = 20),
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
         legend.title=element_text(size=20)) 
-knn_roc
-ggsave(paste(images.dir, "knn_roc.pdf", sep = ""), knn_roc, device = "pdf", width = 15, height = 15)
+knn_legal_roc
+ggsave(paste(images.dir, "knn_legal_roc.pdf", sep = ""), knn_legal_roc, device = "pdf", width = 15, height = 15)
 
