@@ -45,7 +45,7 @@ heatmap.corr.cont = ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)
         legend.key = element_blank(), legend.key.size = unit(2,"line"),
         legend.title=element_text(size= 15))
 heatmap.corr.cont
-ggsave(paste(images.dir, "heatmap_corr_cont", sep = ""), heatmap.corr.cont, device = "pdf", width = 15, height = 15)
+ggsave(paste(images.dir, "heatmap_corr_cont.pdf", sep = ""), heatmap.corr.cont, device = "pdf", width = 15, height = 15)
 
 # The only meaningful relationship seems to be between Impulsive and SS.
 
