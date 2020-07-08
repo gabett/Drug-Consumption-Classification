@@ -99,7 +99,7 @@ folds <- cut(seq(1,nrow(train.ds.shuffled)), breaks=10, labels=FALSE)
 #Perform 10 fold cross validation
 specificity.cv = rep(0, 10)
 sensitivity.cv = rep(0, 10)
-i = 1
+
 for(i in 1:10){
   
   testIndexes = which(folds==i,arr.ind=TRUE)
@@ -113,15 +113,15 @@ for(i in 1:10){
   predictions.cv = predict.glm(model.train, newdata = testData, type = "response")
   
   # Confusion matrix
-  predicted.categories = ifelse(predictions.cv > 0.5, "Male", "Female")
+  predicted.categories = ifelse(predictions.cv > 0.5, "Female", "Male")
   #classification.table = table(pred = predicted.categories, true = testData$Gender)
-  conf.matrix = confusionMatrix(table(predicted.categories, testData$Gender)
+  table.categories = table(predicted.categories, testData$Gender)
   
-  specificity.cv[i] = specificity(conf.matrix)
-  sensitivity.cv[i] = sensitivity.cv(conf.matrix)
+  sensitivity.cv[i] = (table.categories[2]) / (table.categories[2] + table.categories[4])
+  specificity.cv[i] = (table.categories[3]) / (table.categories[3] + table.categories[1])
 }
 
-
+boxplot(sensitivity.cv, specificity.cv)
 
 
 
@@ -129,22 +129,31 @@ for(i in 1:10){
 train.cv = trainControl(method = "repeatedcv", number = 10, repeats = 3)
 
 # Train the model
-train.model <- train(Gender ~ `Age_25-34` + Education_BS + Education_MS + Country_UK + Nscore + Ascore + Cscore + 
-                 Amyl_TRUE + Legalh_TRUE + LSD_TRUE, data = train.ds, method = "glm",
-               trControl = train.cv)
+train.model <- glm(Gender ~ `Age_25-34` + Education_BS + Education_MS + Country_UK + Nscore + Ascore + Cscore + 
+                 Amyl_TRUE + Legalh_TRUE + LSD_TRUE, data = train.ds, family = binomial)
 
 # Extending for test dataset too.
 test.ds = fastDummies::dummy_cols(test.ds)
-predictions = predict.glm(train.model, newdata = test.ds, type = "response")
+predictions = predict(train.model, test.ds, type = "response")
 
 # Confusion matrix
-predicted.categories = ifelse(predictions > 0.5, "Male", "Female")
-classification.table = table(pred = predicted.categories, true = test.ds$Gender)
+predicted.classes = ifelse(predictions > 0.5, "Male", "Female")
+classification.table = table(pred = predicted.classes, true = test.ds$Gender)
 classification.table
 
-# Error rate
-(112 + 120) / (112 + 270 + 252 + 120)
-confusionMatrix(classification.table)
+# Plotting confusion matrix
+library(ggplot2)
+TrueClass = factor(c("Female", "Female", "Male", "Male"))
+PredictedClass = factor(c("Male", "Female", "Male", "Female"))
+Y      = c(classification.table[1], classification.table[2], 
+            classification.table[3], classification.table[4])
+df = data.frame(TClass, PClass, Y)
+
+ggplot(data =  df, mapping = aes(x = TrueClass, y = PredictedClass)) +
+  geom_tile(aes(fill = Y), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", Y)), vjust = 1) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_bw() + theme(legend.position = "none")
 
 # Roc Curve
 numeric_real = ifelse(test.ds$Gender == "Male",1,0)
