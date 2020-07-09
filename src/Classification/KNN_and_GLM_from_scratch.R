@@ -14,6 +14,8 @@ library(RColorBrewer)
 library(pals)
 library(reshape2)
 library(patchwork)
+library(leaps)
+library(caret)
 rm(list = ls())
 
 # Global Variables 
@@ -72,7 +74,7 @@ knn_basic_pROC
 
 knn_basic_roc = pROC::ggroc(knn_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
-  annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8421", parse = TRUE) +   
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8421", parse = TRUE) +   
   theme_minimal() +
   theme(legend.position = "left",
         aspect.ratio = 1, 
@@ -100,7 +102,7 @@ glm_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, n
 
 glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
-  annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8434", parse = TRUE) +   
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8434", parse = TRUE) +   
   theme_minimal() +
   theme(legend.position = "left",
         aspect.ratio = 1, 
@@ -116,7 +118,7 @@ glm_basic_roc
 ggsave(paste(images.dir, "glm_basic_roc.pdf", sep = ""), glm_basic_roc, device = "pdf", width = 15, height = 15)
 
 
-#glm with legal drugs
+#glm with legal drugs ####
 
 
 legal_drugs = c("Alcohol",  "Caff", "Choc","Nicotine")
@@ -144,7 +146,7 @@ glm_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_glm_mo
 
 glm_legal_roc = pROC::ggroc(glm_legal_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
-  annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8955", parse = TRUE) +   
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8955", parse = TRUE) +   
   theme_minimal() +
   theme(legend.position = "left",
         aspect.ratio = 1, 
@@ -160,7 +162,126 @@ glm_legal_roc
 ggsave(paste(images.dir, "glm_legal_roc.pdf", sep = ""), glm_legal_roc, device = "pdf", width = 15, height = 15)
 
 
-#legal knn
+# GLM with best selection ####
+legal_drugs = c("Alcohol",  "Caff", "Choc","Nicotine")
+legal_drugs_data = drugs.clean[, legal_drugs]
+
+
+for (i in legal_drugs){
+  legal_drugs_data[,i] = ifelse(drugs.clean[,i]==TRUE,1,0)  
+}
+
+
+legal_train_data = cbind(train_data, legal_drugs_data[index_training,])
+legal_test_data = cbind(test_data, legal_drugs_data[-index_training,])
+
+personal_cols = c("Age", "Gender", "Education", "Country", "Ethnicity")
+personal_data = drugs.clean[, personal_cols]
+# Performing best subset selection
+variables = 15
+complete_train_data = cbind(legal_train_data, personal_data[index_training,])
+complete_test_data = cbind(legal_test_data, personal_data[-index_training,])
+best.subset.selection = regsubsets(train_target ~., complete_train_data, really.big = T, nvmax = variables)
+summary(best.subset.selection)
+
+# Plot RSS, adjusted r-square, Cp, BIC for all the models at once
+par(mfrow = c(2, 2))
+
+# RSS Plot
+plot(best.subset.summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
+
+# Adjusted RSq plot
+plot(best.subset.summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", 
+     type = "l")
+which.max(best.subset.summary$adjr2) # 12
+points(12, best.subset.summary$adjr2[12], col = "red", cex = 2, pch = 20)
+
+# Cp
+plot(best.subset.summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
+which.min(best.subset.summary$cp) # 12
+points(12, best.subset.summary$cp[12], col = "red", cex = 2, pch = 20)
+
+# BIC
+plot(best.subset.summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
+which.min(best.subset.summary$bic) # 9
+points(9, best.subset.summary$bic[9], col = "red", cex = 2, pch = 20)
+
+# Plotting regsubsets result
+par(mfrow = c(2,2))
+# Plotting built into regsubsets()
+plot(best.subset.selection, scale = "r2")
+plot(best.subset.selection, scale = "adjr2")
+plot(best.subset.selection, scale = "Cp")
+plot(best.subset.selection, scale = "bic")
+
+par(mfrow = c(1,1))
+
+# Choosing the model with the lowest BIC
+coef(best.subset.selection, 9)
+
+# Extending the dataset by unfolding its dummy in order to choose the
+# specific categories found from best subset selection model.
+complete_train_data.unfolded = fastDummies::dummy_cols(complete_train_data)
+complete_test_data.unfolded = fastDummies::dummy_cols(complete_test_data)
+
+# Filtering training data based on the variables found in the model with the lowest BIC
+complete_train_data.unfolded = complete_train_data.unfolded %>% 
+  select(c("Oscore", "Ascore", "Cscore", "Nicotine", "Age_45-54", "Age_55-64", "Age_65+", 
+           "Education_MS", "Country_UK"))
+glm_model <- train(x=complete_train_data.unfolded, y=train_target, method = "glm", trControl = control,  tuneLength = 20)
+glm_prediction = predict(glm_model, newdata=complete_test_data.unfolded)
+glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
+
+glm_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
+                           plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
+
+
+glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+  geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.911", parse = TRUE) +   
+  theme_minimal() +
+  theme(legend.position = "left",
+        aspect.ratio = 1, 
+        title = element_text(size = 20),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        legend.key = element_blank(), legend.key.size = unit(1,"line"),
+        legend.title=element_text(size=20)) 
+glm_basic_roc
+ggsave(paste(images.dir, "glm_basic_roc.pdf", sep = ""), glm_basic_roc, device = "pdf", width = 15, height = 15)
+
+# GLM with every covariate ####
+glm_model <- train(x=complete_train_data, y=train_target, method = "glm", trControl = control,  tuneLength = 20)
+glm_prediction = predict(glm_model, newdata=complete_test_data)
+glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
+
+glm_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
+                           plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
+
+
+glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+  geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.911", parse = TRUE) +   
+  theme_minimal() +
+  theme(legend.position = "left",
+        aspect.ratio = 1, 
+        title = element_text(size = 20),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        legend.key = element_blank(), legend.key.size = unit(1,"line"),
+        legend.title=element_text(size=20)) 
+glm_basic_roc
+ggsave(paste(images.dir, "glm_basic_roc.pdf", sep = ""), glm_basic_roc, device = "pdf", width = 15, height = 15)
+
+
+#legal knn ####
+legal_knn_prediction = predict(legal_knn_model, newdata=legal_test_data)
 control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryFunction=twoClassSummary, returnResamp ="all")
 legal_knn_model <- train(x=legal_train_data, y=train_target, method = "knn", trControl = control,  tuneLength = 40)
 
@@ -174,9 +295,9 @@ knn_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_knn_mo
     plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 knn_legal_pROC
 
-knn_legal_roc = pROC::ggroc(knn_legal_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+knn_legal_roc = pROC::ggroc(knn_legal_pROC) 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
-  annotate("text", x = 0.5, y = 0.5, size = 5, label = "AUC == 0.8953", parse = TRUE) +   
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8953", parse = TRUE) +   
   theme_minimal() +
   theme(legend.position = "left",
         aspect.ratio = 1, 
@@ -187,7 +308,8 @@ knn_legal_roc = pROC::ggroc(knn_legal_pROC) +xlab("Specificity") + ylab("Sensiti
         axis.title.y = element_text(size = 20),
         axis.title.x = element_text(size = 20),
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
-        legend.title=element_text(size=20)) 
+        legend.title=element_text(size=20)) +
+    labs(x = "Specificity", y = "Sensitivity")
 knn_legal_roc
 ggsave(paste(images.dir, "knn_legal_roc.pdf", sep = ""), knn_legal_roc, device = "pdf", width = 15, height = 15)
 

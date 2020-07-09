@@ -103,7 +103,6 @@ roc(ifelse(test_target == "Yes",1,0),predict(legal_knn_model, newdata=legal_test
     plot=TRUE, legacy.axes=TRUE, print.auc=TRUE, )
 
 
-
 library(dplyr)
 library(patchwork)
 
