@@ -56,15 +56,13 @@ prop.table(table(target))
 prop.table(table(train_target))
 prop.table(table(test_target))
 
-
-#compute and evaluate knn model 
-
-#control = trainControl(method="repeatedcv", number=10, repeats=5)
-#knn_model <- train(x=train_data, y=train_target, method = "knn", trControl = control, tuneLength = 20)
+# knn basic model ####
 
 control = trainControl(method="repeatedcv",repeats = 3,classProbs=TRUE, summaryFunction=twoClassSummary, returnResamp ="all")
 knn_model <- train(x=train_data, y=train_target, method = "knn", trControl = control,  tuneLength = 40)
+
 plot(knn_model, xlab = "Number of Neighbors", ylab = "AUC")
+
 knn_prediction = predict(knn_model, newdata=test_data)
 knn_matrix = confusionMatrix(knn_prediction, test_target, positive="Yes" )
 
@@ -182,7 +180,7 @@ variables = 15
 complete_train_data = cbind(legal_train_data, personal_data[index_training,])
 complete_test_data = cbind(legal_test_data, personal_data[-index_training,])
 best.subset.selection = regsubsets(train_target ~., complete_train_data, really.big = T, nvmax = variables)
-summary(best.subset.selection)
+best.subset.summary = summary(best.subset.selection)
 
 # Plot RSS, adjusted r-square, Cp, BIC for all the models at once
 par(mfrow = c(2, 2))
@@ -232,11 +230,11 @@ glm_model <- train(x=complete_train_data.unfolded, y=train_target, method = "glm
 glm_prediction = predict(glm_model, newdata=complete_test_data.unfolded)
 glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
 
-glm_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
+glm_complete_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 
 
-glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+glm_complete_roc = pROC::ggroc(glm_complete_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
   annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.911", parse = TRUE) +   
   theme_minimal() +
@@ -250,19 +248,19 @@ glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensiti
         axis.title.x = element_text(size = 20),
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
         legend.title=element_text(size=20)) 
-glm_basic_roc
-ggsave(paste(images.dir, "glm_basic_roc.pdf", sep = ""), glm_basic_roc, device = "pdf", width = 15, height = 15)
+glm_complete_roc
+ggsave(paste(images.dir, "glm_complete_roc.pdf", sep = ""), glm_complete_roc, device = "pdf", width = 15, height = 15)
 
 # GLM with every covariate ####
 glm_model <- train(x=complete_train_data, y=train_target, method = "glm", trControl = control,  tuneLength = 20)
 glm_prediction = predict(glm_model, newdata=complete_test_data)
 glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
 
-glm_basic_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
+glm_all_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 
 
-glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
+glm_all_roc = pROC::ggroc(glm_all_pROC) +xlab("Specificity") + ylab("Sensitivity") + 
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
   annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.911", parse = TRUE) +   
   theme_minimal() +
@@ -276,8 +274,8 @@ glm_basic_roc = pROC::ggroc(glm_basic_pROC) +xlab("Specificity") + ylab("Sensiti
         axis.title.x = element_text(size = 20),
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
         legend.title=element_text(size=20)) 
-glm_basic_roc
-ggsave(paste(images.dir, "glm_basic_roc.pdf", sep = ""), glm_basic_roc, device = "pdf", width = 15, height = 15)
+glm_all_roc
+ggsave(paste(images.dir, "glm_all_covariates_roc.pdf", sep = ""), glm_all_roc, device = "pdf", width = 15, height = 15)
 
 
 #legal knn ####
@@ -295,9 +293,9 @@ knn_legal_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(legal_knn_mo
     plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 knn_legal_pROC
 
-knn_legal_roc = pROC::ggroc(knn_legal_pROC) 
+knn_legal_roc = pROC::ggroc(knn_legal_pROC) +
   geom_segment(aes(x = 1, xend = 0, y = 0, yend = 1), color="darkgrey", linetype="dashed") +
-  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8953", parse = TRUE) +   
+  annotate("text", x = 0.5, y = 0.5, size = 20, label = "AUC == 0.8943", parse = TRUE) +   
   theme_minimal() +
   theme(legend.position = "left",
         aspect.ratio = 1, 
