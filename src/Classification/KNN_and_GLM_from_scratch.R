@@ -228,7 +228,7 @@ complete_train_data.unfolded = complete_train_data.unfolded %>%
            "Education_MS", "Country_UK"))
 glm_model <- train(x=complete_train_data.unfolded, y=train_target, method = "glm", trControl = control,  tuneLength = 20)
 glm_prediction = predict(glm_model, newdata=complete_test_data.unfolded)
-glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
+glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes", mode = "everything")
 
 glm_complete_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
@@ -255,7 +255,7 @@ ggsave(paste(images.dir, "glm_complete_roc.pdf", sep = ""), glm_complete_roc, de
 glm_model <- train(x=complete_train_data, y=train_target, method = "glm", trControl = control,  tuneLength = 20)
 glm_prediction = predict(glm_model, newdata=complete_test_data)
 glm_matrix = confusionMatrix(glm_prediction, test_target, positive="Yes" )
-
+glm_matrix
 glm_all_pROC = pROC::roc(ifelse(test_target == "Yes",1,0),predict(glm_model, newdata=complete_test_data.unfolded, type="prob")[,"Yes"],
                            plot=TRUE, legacy.axes=TRUE, print.auc=TRUE)
 
@@ -275,6 +275,28 @@ glm_all_roc = pROC::ggroc(glm_all_pROC) +xlab("Specificity") + ylab("Sensitivity
         legend.key = element_blank(), legend.key.size = unit(1,"line"),
         legend.title=element_text(size=20)) 
 glm_all_roc
+
+confusionMatrix(glm_all_roc)
+
+t_glm <- data.frame(glm_matrix$table)
+
+library(dplyr)
+library(patchwork)
+
+plotTable_glm <- t_glm %>%
+  mutate(goodbad = ifelse(t_glm$Prediction == t_glm$Reference, "good", "bad")) %>%
+  group_by(Reference) %>%
+  mutate(prop = Freq/sum(Freq))
+
+plot_glm = ggplot(data = plotTable_glm, mapping = aes(x = Reference, y = Prediction, fill = goodbad, alpha = prop )) +
+  geom_tile(show.legend = FALSE) +
+  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1) +
+  scale_fill_manual(values = c(good = "green", bad = "red")) +
+  theme_bw() +
+  xlim(rev(levels(t_glm$Reference)))+ggtitle('GLM from best subset selection')
+
+plot_glm
+
 ggsave(paste(images.dir, "glm_all_covariates_roc.pdf", sep = ""), glm_all_roc, device = "pdf", width = 15, height = 15)
 
 
