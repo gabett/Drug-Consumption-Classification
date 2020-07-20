@@ -75,11 +75,11 @@ ggplot(drugs.df) +
   geom_bar(aes(x = reorder(Drug, -Total), y = Total, fill = Drug), stat = "identity") +
   theme_minimal() +
   labs(y = "Count", x = "Drug", fill = "Drugs", title = "") +
-  theme(legend.position = "left",
+  theme(legend.position = "none",
         aspect.ratio = 1, 
         title = element_text(size= 25),
         axis.line = element_line(colour = "black"),
-        axis.text.x = element_text(size= 15),
+        axis.text.x = element_text(size= 20),
         axis.text.y = element_text(size= 25),
         axis.title.y = element_text(size= 25),
         axis.title.x = element_text(size= 25),
